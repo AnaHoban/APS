@@ -1,0 +1,390 @@
+---
+title: "R Notebook"
+output: html_notebook
+
+
+good resource:https://humburg.github.io/Power-Analysis/simr_power_analysis.html
+
+this runs simulations for the RTs
+---
+
+
+
+```{r}
+library(simr) 
+library(lme4)
+library(lmerTest)
+library(ggplot2)
+library(effectsize)
+library(emmeans)
+library(dplyr)
+
+```
+
+```{r}
+#import data 
+#reading times
+french_control = read.csv("C:/Users/anaho/Desktop/research/Language/APS/analysis/Data/CORR_clean_french_online_silentData_formatted.csv", fileEncoding='latin1')
+french_aps = read.csv("C:/Users/anaho/Desktop/research/Language/APS/analysis/Data/CORR_clean_french_online_apsData_formatted.csv", fileEncoding='latin1')
+french_control$speech_condition = 'none'
+columns = c("Session_Name_", "SENTENCE_RT", "group",'Item','syntactic_condition', 'plausibility_condition', 'condition','speech_condition', 'Trial.Number', 'block')
+
+french_all =  rbind(french_control[,columns],french_aps[,columns])
+
+
+#log and scale data
+french_all$log_time = scale(log(as.numeric(french_all$SENTENCE_RT)))
+
+```
+
+```{r}
+set.seed(123)
+
+# Convert variables to factors if necessary
+french_all$group <- factor(french_all$group)
+french_all$syntactic_condition <- factor(french_all$syntactic_condition)
+french_all$plausibility_condition <- factor(french_all$plausibility_condition)
+french_all$Session_Name_ <- factor(french_all$Session_Name_)
+french_all$Item <- factor(french_all$Item)
+french_all$condition <- factor(french_all$condition)
+french_all$block <- factor(french_all$block)
+french_all$Trial.Number <- factor(french_all$Trial.Number)
+
+
+# super simple model
+rt_model <- lmer(log_time ~ speech_condition * syntactic_condition * plausibility_condition +
+                (1 | Session_Name_) + (1 | Item), data = french_all[french_all$block == 4,])
+summary(rt_model)
+```
+```{r}
+french_all$block == 1
+```
+
+
+
+```{r}
+#estimated marginal means
+emmeans_syntax <- emmeans(rt_model, ~ group:syntactic_condition)
+print(emmeans_syntax)
+
+#cohen's d 
+pairwise_d <- pairs(emmeans_syntax, adjust = "bonferroni")
+print(pairwise_d)
+
+# Power analysis for the effect of group
+power_sim <- powerSim(rt_model, fixed("groupcontrol", "t"), nsim = 10)
+print(power_sim) 
+
+```
+
+```{r}
+#the current fixed effects of each fixed effect
+fixef(rt_model)
+```
+1. We now try to make the effect size of group vary
+
+we compute the power of different effect sizes
+
+```{r} 
+#could also do this with power curve
+
+#now we look for the change in fixed effects --> how does that change the power
+effect_sizes = c(0.10, 0.20, 0.30, 0.40, 0.50, 0.6, 0.7, 0.8, 0.9) #could add more if necessary
+power_results = data.frame( Effectsize = effect_sizes, Power = effect_sizes*0)
+
+for (i in seq_along(effect_sizes))  {
+  
+  x = effect_sizes[i]
+  
+  print(paste("Running power simulation for effect size:", x))
+  
+  fixef(rt_model)['groupcontrol'] = x #change the fixed effect's size of group
+  
+  #run power simulation
+  x_power_sim = powerSim(rt_model, fixed("groupcontrol", "t"), nsim = 100)
+  
+  # Extract and store power percentage
+  power_percentage <- summary(x_power_sim)$mean
+  
+  power_results$Power[i] = power_percentage
+  
+}
+
+```
+
+
+
+```{r}
+#plot
+ggplot(power_results, aes(x = Effectsize, y = Power)) +
+  #geom_line() +
+  geom_point() +
+  labs(title = "Power Analysis",
+       x = "Effect Size",
+       y = "Power (%)") +
+  theme_minimal()
+```
+
+```{r}
+participant_counts <- french_all %>%
+  group_by(group) %>%
+  summarise(n_participants = n_distinct(Session_Name_))
+print(participant_counts)
+```
+
+2. Now, we vary the number of participants and compute the power of each new number of participants
+
+```{r}
+rt_model <- lmer(log_time ~ group * syntactic_condition * plausibility_condition + (1 | Session_Name_) + (1 | Item), data = french_all)
+```
+
+
+```{r}
+# Define the number of additional participants per group
+#note: within extends the nnumber of trials per participants, along increases the number of participants
+additional_participants_per_group <- 10
+total_additional_participants <- additional_participants_per_group * 2  # Two groups: control and APS
+
+#extending the model
+#extended_model <- extend(rt_model, within = "group+Session_Name_+Item", n = nlevels(french_all$Session_Name_) + total_additional_participants)  # we are extending the number of participants for each item within each group
+extended_model <- extend(rt_model, along = "Session_Name_", n = nlevels(french_all$Session_Name_) + total_additional_participants)  # we are extending the number of participants for each item within each group
+
+nrow(getData(rt_model))
+nrow(getData(extended_model))
+```
+
+```{r}
+power_sim = powerSim(extended_model, fixed("groupcontrol", "t"), nsim = 100)
+
+power_sim
+```
+
+
+
+```{r}
+#now we change the number of participants
+n_part = c(10,30,50,80,100) #could add more if necessary
+
+#to store the simulation results
+part_results = data.frame( PartNum = n_part, Power = n_part*0)
+
+for (i in seq_along(n_part))  {
+  
+  x = n_part[i] #number of new participants
+  n_tot = nlevels(french_all$Session_Name_) + x
+  
+  print(paste("Running power simulation for number of participants:", n_tot))
+  
+  #extending the model
+  extended_model <- extend(rt_model, within = "group+Session_Name_", n = n_tot) 
+  print(nrow(getData(extended_model)))
+  
+  #run power simulation
+  x_power_sim = powerSim(extended_model, fixed("groupcontrol", "t"), nsim = 100)
+  
+  # Extract and store power percentage
+  power_percentage <- summary(x_power_sim)$mean
+  
+  part_results$Power[i] = power_percentage
+  
+ #estimated marginal means
+  emmeans_syntax <- emmeans(extended_model, ~ group)
+  print(emmeans_syntax)
+
+  #cohen's d 
+  pairwise_d <- pairs(emmeans_syntax, adjust = "bonferroni")
+  print(pairwise_d)
+  
+  
+  
+}
+```
+```{r}
+#plot
+ggplot(part_results, aes(x = PartNum, y = Power)) +
+  #geom_line() +
+  geom_point() +
+  labs(title = "Power Analysis",
+       x = "Additional Participant Number per Group",
+       y = "Power (%)") +
+  theme_minimal()
+```
+
+
+
+
+There is another way we can simulate new data. let's see what happens then
+
+```{r}
+
+# Define a function to extend the APS group with representative data
+extend_aps_group <- function(model, n_new_aps) {
+  
+  # Get the original data from the model
+  original_data <- getData(model)
+  
+  # Identify existing APS participants
+  aps_participants <- unique(original_data$Session_Name_[original_data$group == "aps"])
+  
+  # Create new APS participant IDs
+  new_aps_participants <- paste0("NewAPS_", seq_len(n_new_aps))
+  
+  # Create a template of new APS data based on existing APS data
+  template_aps <- original_data %>%
+    filter(group == "aps") %>%
+    group_by(Item, syntactic_condition, plausibility_condition) %>%
+    summarise(mean_RT = mean(SENTENCE_RT), sd_RT = sd(SENTENCE_RT)) %>%
+    ungroup()
+  
+  # Generate new data for new APS participants
+  new_aps_data <- do.call(rbind, lapply(new_aps_participants, function(participant) {
+    
+    rt_values <- rnorm(nrow(template_aps), mean = template_aps$mean_RT, sd = template_aps$sd_RT)
+    
+    data.frame(
+      Session_Name_ = participant,
+      Item = rep(template_aps$Item, each = 1),
+      syntactic_condition = rep(template_aps$syntactic_condition, each = 1),
+      plausibility_condition = rep(template_aps$plausibility_condition, each = 1),
+      group = "aps",
+      SENTENCE_RT = rt_values,
+      log_time = scale(rt_values),
+      condition = 1 #just to have smtg there for now
+    )
+  }))
+  
+  # Combine original data with new APS data
+  extended_data <- rbind(original_data, new_aps_data)
+  print(new_aps_data)
+  
+  # Update the model with the extended dataset
+  update(model, data = extended_data)
+}
+
+# Extend the model by adding 20 new APS participants
+extended_model <- extend_aps_group(rt_model, 40)
+
+# Print the extended model summary to ensure the new participants are added
+#summary(extended_model)
+```
+```{r}
+#estimated marginal means
+emmeans_syntax <- emmeans(rt_model, ~ group:syntactic_condition)
+print(emmeans_syntax)
+
+#cohen's d 
+pairwise_d <- pairs(emmeans_syntax, adjust = "bonferroni")
+print(pairwise_d)
+
+# Power analysis for the effect of group
+power_sim <- powerSim(rt_model, fixed("groupcontrol", "t"), nsim = 100)
+print(power_sim) 
+
+
+```
+
+```{r}
+# Run power simulation on the extended model
+power_sim_extended <- powerSim(extended_model, fixed("group", "t"), nsim = 100)
+
+# Print power simulation results
+print(summary(power_sim_extended))
+```
+
+```{r}
+#now we look for the change in fixed effects --> how does that change the power
+effect_sizes = c(0.10, 0.20, 0.30, 0.40, 0.50, 0.6, 0.7, 0.8, 0.9) #could add more if necessary
+power_results = data.frame( Effectsize = effect_sizes, Power = effect_sizes*0)
+
+for (i in seq_along(effect_sizes))  {
+  
+  x = effect_sizes[i]
+  
+  print(paste("Running power simulation for effect size:", x))
+  
+  fixef(rt_model)['groupcontrol'] = x #change the fixed effect's size of group
+  
+  #run power simulation
+  x_power_sim = powerSim(extended_model, fixed("groupcontrol", "t"), nsim = 1000)
+  
+  # Extract and store power percentage
+  power_percentage <- summary(x_power_sim)$mean
+  
+  power_results$Power[i] = power_percentage
+  
+}
+
+```
+```{r}
+#plot
+ggplot(power_results, aes(x = Effectsize, y = Power)) +
+  #geom_line() +
+  geom_point() +
+  labs(title = "Power Analysis",
+       x = "Nb of participants",
+       y = "Power (%)") +
+  theme_minimal()
+```
+
+```{r}
+#look at trials with ORC
+
+orc_only = french_all %>%
+  filter(syntactic_condition == "ORC")
+
+# super simple model
+rt_model_orc <- lmer(log_time ~ group *  plausibility_condition +
+                (1 | Session_Name_) + (1 | Item), data = orc_only)
+summary(rt_model_orc)
+```
+```{r}
+#estimated marginal means
+emmeans_syntax <- emmeans(rt_model_orc, ~ group)
+print(emmeans_syntax)
+
+#cohen's d 
+pairwise_d <- pairs(emmeans_syntax, adjust = "bonferroni")
+print(pairwise_d)
+
+# Power analysis for the effect of group
+power_sim <- powerSim(rt_model_orc, fixed("groupcontrol", "t"), nsim = 10)
+print(power_sim) 
+
+```
+
+```{r}
+#could also do this with power curve
+
+#now we look for the change in fixed effects --> how does that change the power
+effect_sizes = c(0.10, 0.20, 0.30, 0.40, 0.50, 0.6, 0.7, 0.8, 0.9) #could add more if necessary
+power_results_orc = data.frame( Effectsize = effect_sizes, Power = effect_sizes*0)
+
+for (i in seq_along(effect_sizes))  {
+  
+  x = effect_sizes[i]
+  
+  print(paste("Running power simulation for effect size:", x))
+  
+  fixef(rt_model)['groupcontrol'] = x #change the fixed effect's size of group
+  
+  #run power simulation
+  x_power_sim = powerSim(rt_model_orc, fixed("groupcontrol", "t"), nsim = 500)
+  
+  # Extract and store power percentage
+  power_percentage <- summary(x_power_sim)$mean
+  
+  power_results_orc$Power[i] = power_percentage
+  
+}
+```
+
+```{r}
+#plot
+ggplot(power_results_orc, aes(x = Effectsize, y = Power)) +
+  #geom_line() +
+  geom_point() +
+  labs(title = "Power Analysis",
+       x = "Effect Size",
+       y = "Power (%)") +
+  theme_minimal()
+```

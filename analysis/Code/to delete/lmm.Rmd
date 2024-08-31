@@ -1,0 +1,42 @@
+---
+title: "LMM notebook"
+output: html_notebook
+---
+
+
+```{r}
+require(lme4)
+require(dfoptim)
+require(optimx)
+require(ggeffects)
+library(afex)
+library(tidyverse)
+library(ggplot2)
+library(ggeffects)
+library(funModeling)
+
+```
+
+```{r}
+aps_data = read.csv("C:/Users/anaho/Desktop/research/Language/APS/Preprocessed_aps_data.csv", fileEncoding='latin1')
+control_data = read.csv("C:/Users/anaho/Desktop/research/Language/APS/Preprocessed_control_data.csv", fileEncoding='latin1')
+aps_data
+```
+```{r}
+#to model RT, we have the following variables:
+# fixed effects : plausibility, structure, speaker, trial order
+# random effects: item, subject
+
+#turn item_number and subject number into numbers
+#aps_data = as.numeric
+
+lin_mod.mod = lmer( SENTENCE_RT_norm ~ (1|item_number) + (1|Session_Name_) + (1|Trial_Index_)  + plausibility_condition + syntactic_condition + speech_condition + plausibility_condition*speech_condition, data = aps_data, REML = FALSE, control = lmerControl(optimizer ="Nelder_Mead"))
+
+summary(lin_mod.mod)
+
+```
+
+```{r}
+```
+
+

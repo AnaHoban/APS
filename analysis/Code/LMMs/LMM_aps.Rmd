@@ -1,0 +1,206 @@
+---
+title: "LMM notebook"
+output: html_notebook
+---
+
+
+```{r}
+require(lme4)
+require(dfoptim)
+require(optimx)
+require(ggeffects)
+library(afex)
+library(tidyverse)
+library(ggplot2)
+library(ggeffects)
+library(funModeling)
+library(aod)
+
+```
+
+1. Importing the data
+
+```{r}
+#defining the directory where the data is
+data_dir = 'C:/Users/anaho/Desktop/research/Language/APS/analysis/Data/Processed data/'
+
+```
+
+
+```{r English Data import}
+#run this cell to get the data for the online english experiment
+
+#trial data
+aps_file = 'EnglishOnline/CORR_CLEAN_english_online_apsData_formatted.csv'
+sil_file = 'EnglishOnline/CORR_CLEAN_english_online_silentData_formatted.csv'
+
+#accuracy data
+aps_acc_file = 'EnglishOnline/CORR_summary_clean_english_online_apsData_formatted.csv'
+sil_acc_file = 'EnglishOnline/CORR_summary_clean_english_online_silentData_formatted.csv'
+
+```
+
+
+
+```{r French Data import}
+#run this cell to get the data for the online french experiment
+
+#trial data
+aps_file = 'FrenchOnline/CORR_clean_only_aps_data.csv'
+sil_file = 'FrenchOnline/CORR_clean_only_control_data.csv'
+
+#accuracy data
+aps_acc_file = 'FrenchOnline/CORR_summary_clean_only_aps_data.csv'
+sil_acc_file = 'FrenchOnline/CORR_summary_clean_only_control_data.csv'  
+```
+
+
+```{r Lab Data import}
+#run this cell to get the data for the online french experiment
+
+#trial data
+aps_file = 'FrenchLab/CORR_clean_only_aps_data.csv'
+sil_file = 'FrenchLab/CORR_clean_only_control_data.csv'
+
+#accuracy data
+aps_acc_file = 'FrenchLab/CORR_summary_clean_only_aps_data.csv'
+sil_acc_file = 'FrenchLab/CORR_summary_clean_only_control_data.csv'  
+
+```
+
+```{r}
+#import data
+aps_data = read.csv( paste(data_dir, aps_file, sep = ""), fileEncoding='latin1')
+control_data = read.csv( paste(data_dir, sil_file, sep = "") , fileEncoding='latin1')
+
+
+#accuracy data
+aps_acc_data = read.csv( paste(data_dir, aps_acc_file, sep = ""), fileEncoding='latin1')
+control_acc_data = read.csv( paste(data_dir, sil_acc_file, sep = ""), fileEncoding='latin1')
+
+
+#adjust the data sets
+
+control_acc_data$speech_condition = 'silent'
+control_data$speech_condition = 'silent'
+
+#log and scale data
+aps_data$log_time = scale(log10(aps_data$SENTENCE_RT)) 
+
+control_data$log_time = scale(log10(control_data$SENTENCE_RT)) 
+
+#hist(aps_data$log_time)
+```
+
+
+```{r Only for online english data}
+#rename the columns for the english
+aps_data = aps_data %>% 
+  rename(
+    item_number = Trial.Number  
+    )
+control_data = control_data %>% 
+  rename(
+    item_number = Trial.Number  
+    )
+```
+
+
+#First model here
+```{r}
+#to model RT, we have the following variables:
+# random effects: item, subject
+
+#turn item_number and subject number into numbers
+#aps_data = as.numeric
+
+lin_mod_aps.mod = lmer(log_time ~ block + (1|Session_Name_) + (1|item_number)  + plausibility_condition*speech_condition*syntactic_condition, data = aps_data, REML = FALSE, control = lmerControl(optimizer ="Nelder_Mead"))
+
+summary(lin_mod_aps.mod)
+
+```
+
+```{r}
+## same for control
+
+#to model RT, we have the following variables:
+# fixed effects : plausibility, structure, speaker, trial order
+# random effects: item, subject
+
+#turn item_number and subject number into numbers
+
+lin_mod_ctrl.mod = lmer(log_time ~ block + (1|Session_Name_) + (1|item_number)  + plausibility_condition*syntactic_condition, data = control_data, REML = FALSE, control = lmerControl(optimizer ="Nelder_Mead"))
+
+summary(lin_mod_ctrl.mod)
+
+```
+
+```{r}
+
+#GLM for response accuracy APS
+
+logit_aps = glm( PERC_CORRECT ~ plausibility_condition*syntactic_condition*speech_condition*block , data = aps_acc_data )
+
+summary(logit_aps)
+
+```
+```{r}
+#GLM for response accuracy #CONTROL
+logit_aps = glm( PERC_CORRECT ~ plausibility_condition*syntactic_condition*block , data = control_acc_data )
+
+summary(logit_aps)
+```
+```{r}
+#GLM for response accuracy
+logit_ctrl = glm( PERC_CORRECT ~ plausibility_condition*syntactic_condition*block, data = control_acc_data )
+
+summary(logit_ctrl)
+```
+
+```{r}
+columns = c("Session_Name_", "log_time","block","speech_condition", "plausibility_condition", "syntactic_condition", "item_number")
+
+both_groups <- rbind(aps_data[,columns],control_data[,columns])
+
+
+```
+
+```{r}
+#model comparing french to silent
+lin_mod_all.mod = lmer(log_time ~ block + (1|Session_Name_) + (1|item_number)  + plausibility_condition*syntactic_condition*speech_condition, data = both_groups[both_groups$speech_condition != "chinese",], REML = FALSE, control = lmerControl(optimizer ="Nelder_Mead"))
+
+summary(lin_mod_all.mod)
+```
+
+```{r}
+#comparing silent to chinese
+
+lin_mod_all.mod = lmer(log_time ~ block + (1|Session_Name_) + (1|item_number)  + plausibility_condition*syntactic_condition*speech_condition, data = both_groups[both_groups$speech_condition != "french",], REML = FALSE, control = lmerControl(optimizer ="Nelder_Mead"))
+
+summary(lin_mod_all.mod)
+```
+```{r}
+columns = c("Session_Name_", "PERC_CORRECT","block","speech_condition", "plausibility_condition", "syntactic_condition")
+
+both_groups <- rbind(aps_acc_data[,columns], control_acc_data[,columns])
+```
+```{r}
+
+#GLM for response accuracy
+logit_ctrl = glm( PERC_CORRECT ~ plausibility_condition*syntactic_condition*block*speech_condition, data = both_groups[both_groups$speech_condition != "chinese",] )
+
+summary(logit_ctrl)
+```
+```{r}
+#GLM for response accuracy
+logit_ctrl = glm( PERC_CORRECT ~ plausibility_condition*syntactic_condition*block*speech_condition, data = both_groups[both_groups$speech_condition != "french",] )
+
+summary(logit_ctrl)
+```
+
+```{r}
+mean(aps_acc_data$PERC_CORRECT)
+sd(aps_acc_data$PERC_CORRECT)
+mean(control_acc_data$PERC_CORRECT)
+sd(control_acc_data$PERC_CORRECT)
+```

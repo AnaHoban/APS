@@ -1,0 +1,76 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+require(lme4)
+require(dfoptim)
+require(optimx)
+require(ggeffects)
+library(afex)
+library(tidyverse)
+library(ggplot2)
+library(ggeffects)
+library(funModeling)
+library(aod)
+
+```
+
+
+
+```{r}
+french_data = read.csv("C:/Users/anaho/Desktop/research/Language/APS/analysis/Data/CORR_clean_french_online_silentData_formatted.csv", fileEncoding='latin1')
+english_data = read.csv("C:/Users/anaho/Desktop/research/Language/APS/analysis/Data/CORR_clean_online_silentData_formatted.csv", fileEncoding='latin1')
+
+french_data$language = 'french'
+english_data$language = 'english'
+
+#accuracy data
+fr_acc_data= read.csv("C:/Users/anaho/Desktop/research/Language/APS/analysis/Data/CORR_summary_clean_french_online_silentData_formatted.csv", fileEncoding='latin1')
+en_acc_data= read.csv("C:/Users/anaho/Desktop/research/Language/APS/analysis/Data/CORR_summary_clean_online_silentData_formatted.csv", fileEncoding='latin1')
+
+fr_acc_data$language = 'french'
+en_acc_data$language = 'english'
+
+
+#log and scale data
+french_data$log_time = scale(log10(as.numeric(french_data$SENTENCE_RT)))
+
+english_data$log_time = scale(log10(as.numeric(english_data$SENTENCE_RT)))
+
+#hist(aps_data$log_time)
+
+```
+
+
+```{r}
+columns = c("Session_Name_", "log_time", "block", "plausibility_condition", "syntactic_condition", "Item", "language")
+
+both_groups <- rbind(french_data[,columns],english_data[,columns])
+
+
+```
+
+```{r}
+#model comparing english to french
+lin_mod_all.mod = lmer(log_time ~ block + (1|Session_Name_) + (1|Item)  + plausibility_condition*syntactic_condition*language, data = both_groups, REML = FALSE, control = lmerControl(optimizer ="Nelder_Mead"))
+
+summary(lin_mod_all.mod)s
+```
+
+```{r}
+columns = c("Session_Name_", "PERC_CORRECT", "block", "plausibility_condition", "syntactic_condition", "language")
+
+both_acc_groups <- rbind(fr_acc_data[,columns],en_acc_data[,columns])
+
+both_acc_groups
+```
+```{r}
+#GLM for response accuracy
+logit_ctrl = glm( PERC_CORRECT ~ plausibility_condition*syntactic_condition*block*language, data = both_acc_groups )
+
+summary(logit_ctrl)
+```
+
+

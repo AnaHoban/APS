@@ -1,0 +1,204 @@
+---
+title: "LMM notebook"
+output: html_notebook
+---
+
+
+```{r}
+require(lme4)
+require(dfoptim)
+require(optimx)
+require(ggeffects)
+library(afex)
+library(tidyverse)
+library(ggplot2)
+library(ggeffects)
+library(funModeling)
+library(aod)
+
+```
+
+1. Importing the data
+
+```{r}
+#defining the directory where the data is
+data_dir = 'C:/Users/anaho/Desktop/research/Language/APS/analysis/Data/Processed data/'
+
+```
+
+
+```{r English Data import}
+#run this cell to get the data for the online english experiment
+
+#trial data
+aps_file = 'EnglishOnline/CLEAN_english_online_apsData_formatted.csv'
+sil_file = 'EnglishOnline/CLEAN_english_online_silentData_formatted.csv'
+
+#accuracy data
+
+
+```
+
+
+```{r French Data import}
+#run this cell to get the data for the online french experiment
+
+#trial data
+aps_file = 'FrenchOnline/clean_french_online_apsData_formatted.csv'
+sil_file = 'FrenchOnline/clean_french_online_silentData_formatted.csv'
+```
+
+
+```{r Lab Data import}
+#run this cell to get the data for the online french experiment
+
+#trial data
+aps_file = 'FrenchLab/clean_lab_apsData.csv'
+sil_file = 'FrenchLab/clean_lab_silentData.csv'
+```
+
+```{r}
+#import data
+aps_data = read.csv( paste(data_dir, aps_file, sep = ""), fileEncoding='latin1')
+control_data = read.csv( paste(data_dir, sil_file, sep = "") , fileEncoding='latin1')
+aps_data$part <- ifelse(aps_data$block %in% c(1, 3), "first", "second")
+control_data$part <- ifelse(aps_data$block %in% c(1, 3), "first", "second")
+
+
+#adjust the data sets
+
+control_acc_data$speech_condition = 'silent'
+control_data$speech_condition = 'silent'
+```
+
+```{r Only for online data}
+#rename the columns for the english
+aps_data = aps_data %>% 
+  rename(
+    item_number = Trial.Number  
+    )
+control_data = control_data %>% 
+  rename(
+    item_number = Trial.Number  
+    )
+```
+```{r}
+aps_data
+```
+
+
+#First model here
+```{r}
+#to model RT, we have the following variables:
+# random effects: item, subject
+
+#turn item_number and subject number into numbers
+#aps_data = as.numeric
+
+lin_mod_aps.mod = lmer( scale(log(SENTENCE_RT)) ~ plausibility_condition*speech_condition*syntactic_condition*part + (1|Session_Name_) + (1|item_number), data = aps_data[aps_data$syntactic_condition != 'none' & aps_data$PARAPHRASE_ACCURACY == 1, ])
+
+summary(lin_mod_aps.mod)
+
+```
+
+```{r}
+## same for control
+
+#to model RT, we have the following variables:
+# fixed effects : plausibility, structure, speaker, trial order
+# random effects: item, subject
+
+#turn item_number and subject number into numbers
+
+lin_mod_ctrl.mod = lmer( scale(log(SENTENCE_RT)) ~  (1|Session_Name_) + (1|item_number)  + plausibility_condition*syntactic_condition*part, data = control_data[control_data$syntactic_condition != 'none'& control_data$PARAPHRASE_ACCURACY == 1, ], REML = FALSE, control = lmerControl(optimizer ="Nelder_Mead"))
+
+summary(lin_mod_ctrl.mod)
+
+```
+
+```{r}
+
+#GLM for response accuracy APS
+
+logit_aps = glmer( PARAPHRASE_ACCURACY ~ (1|Session_Name_) + (1|item_number)  + plausibility_condition*syntactic_condition*speech_condition*part , data = aps_data[aps_data$syntactic_condition != 'none',], family = 'binomial' )
+
+
+summary(logit_aps)
+
+```
+```{r}
+#GLM for response accuracy #CONTROL
+#GLM for response accuracy APS
+
+logit_aps = glmer( PARAPHRASE_ACCURACY ~  (1|Session_Name_) + (1|item_number)  + plausibility_condition*syntactic_condition*part, data = control_data[control_data$syntactic_condition != 'none',], family = 'binomial' )
+
+
+summary(logit_aps)
+
+```
+
+
+```{r}
+columns = c("Session_Name_", "SENTENCE_RT","block","speech_condition", "plausibility_condition", "syntactic_condition", "item_number", "PARAPHRASE_ACCURACY",'part', 'sentence_type', 'condition', 'group')
+
+both_groups <- rbind(aps_data[,columns],control_data[,columns])
+
+both_groups = both_groups[both_groups$syntactic_condition != 'none',] #filter fillers
+
+both_groups
+```
+
+```{r}
+#model comparing french to silent
+lin_mod_all.mod = lmer(scale(log(SENTENCE_RT)) ~ (1|Session_Name_) + (1|item_number)  + plausibility_condition*syntactic_condition*speech_condition*part, data = both_groups[both_groups$speech_condition != "non-native"& both_groups$PARAPHRASE_ACCURACY == 1 ,], REML = FALSE, control = lmerControl(optimizer ="Nelder_Mead"))
+
+summary(lin_mod_all.mod)
+```
+
+```{r}
+#comparing silent to chinese
+lin_mod_all.mod = lmer(scale(log(SENTENCE_RT)) ~  (1|Session_Name_) + (1|item_number)  + plausibility_condition*syntactic_condition*speech_condition*part, data = both_groups[both_groups$speech_condition != "native" & both_groups$PARAPHRASE_ACCURACY == 1,], REML = FALSE, control = lmerControl(optimizer ="Nelder_Mead"))
+
+summary(lin_mod_all.mod)
+```
+
+```{r}
+
+#GLM for response accuracy
+logit_ctrl = glmer( PARAPHRASE_ACCURACY ~ (1|Session_Name_) + (1|item_number) + plausibility_condition*syntactic_condition*part*speech_condition, data = both_groups[both_groups$speech_condition != "non-native",], family = 'binomial')
+
+summary(logit_ctrl)
+```
+```{r}
+#GLM for response accuracy
+logit_ctrl = glmer( PARAPHRASE_ACCURACY ~ (1|Session_Name_) + (1|item_number) + plausibility_condition*syntactic_condition*part*speech_condition, data = both_groups[both_groups$speech_condition != "native",], family = 'binomial')
+
+summary(logit_ctrl)
+```
+
+```{r}
+mean(aps_acc_data$PERC_CORRECT)
+sd(aps_acc_data$PERC_CORRECT)
+mean(control_acc_data$PERC_CORRECT)
+sd(control_acc_data$PERC_CORRECT)
+```
+
+
+```{r}
+#plotting 
+ggplot(both_groups[both_groups$sentence_type == 'target',], aes(x = factor(condition), y = SENTENCE_RT, fill = group )) +
+  geom_boxplot() +
+  facet_wrap(~block) + 
+  labs(x = "condition",y = 'SENTENCE_RT', title = "Boxplot of Group by Condition and Part") +
+  theme_minimal()
+```
+
+```{r}
+#plotting 
+ggplot(aps_data[aps_data$sentence_type == 'target',], aes(x = factor(condition), y = SENTENCE_RT, fill = speech_condition)) +
+  geom_boxplot() +
+  facet_wrap(~block) + 
+  labs(x = "condition",y = 'SENTENCE_RT', title = "Boxplot of Group by Condition and Part") +
+  theme_minimal()
+```
+

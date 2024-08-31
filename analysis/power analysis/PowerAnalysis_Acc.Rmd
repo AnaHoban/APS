@@ -1,0 +1,105 @@
+---
+title: "R Notebook"
+output: html_notebook
+
+this runs simulations for the accuracy
+---
+```{r}
+library(simr) 
+library(lme4)
+library(lmerTest)
+library(ggplot2)
+library(effectsize)
+library(emmeans)
+library(dplyr)
+```
+
+```{r}
+#importing the data
+#accuracy data
+aps_acc_data = read.csv("C:/Users/anaho/Desktop/research/Language/APS/analysis/Data/CORR_summary_clean_french_online_apsData_formatted.csv", fileEncoding='latin1')
+control_acc_data = read.csv("C:/Users/anaho/Desktop/research/Language/APS/analysis/Data/CORR_summary_clean_french_online_silentData_formatted.csv", fileEncoding='latin1')
+
+control_acc_data$speech_condition = 'none'
+
+columns = c("Session_Name_", "PERC_CORRECT", 'group', "block","speech_condition", "plausibility_condition", "syntactic_condition")
+
+both_groups <- rbind(aps_acc_data[,columns], control_acc_data[,columns])
+
+both_groups
+
+```
+
+```{r}
+set.seed(123)
+
+# Convert variables to factors if necessary
+both_groups$group <- factor(both_groups$group)
+both_groups$syntactic_condition <- factor(both_groups$syntactic_condition)
+both_groups$plausibility_condition <- factor(both_groups$plausibility_condition)
+both_groups$Session_Name_ <- factor(both_groups$Session_Name_)
+both_groups$speech_condition <- factor(both_groups$speech_condition)
+```
+
+
+
+```{r}
+# both_groups[both_groups$speech_condition != "chinese",]
+#GLM for response accuracy
+logit_ctrl = glmer( PERC_CORRECT ~ plausibility_condition*syntactic_condition*block*group + (1 | Session_Name_) , data = both_groups,
+                    family = binomial(link = "logit"))
+
+summary(logit_ctrl)
+```
+
+
+```{r}
+#estimated marginal means
+emmeans_syntax <- emmeans(logit_ctrl, ~ speech_condition)
+print(emmeans_syntax)
+
+#cohen's d 
+pairwise_d <- pairs(emmeans_syntax, adjust = "bonferroni")
+print(pairwise_d)
+
+# Power analysis for the effect of group
+power_sim <- powerSim(logit_ctrl, fixed("speechconditionfrench", "t"), nsim = 1000)
+print(power_sim) 
+```
+
+
+```{r}
+#could also do this with power curve
+
+#now we look for the change in fixed effects --> how does that change the power
+effect_sizes = c(0.10, 0.20, 0.30, 0.40, 0.50, 0.6, 0.7, 0.8, 0.9) #could add more if necessary
+power_results = data.frame( Effectsize = effect_sizes, Power = effect_sizes*0)
+
+for (i in seq_along(effect_sizes))  {
+  
+  x = effect_sizes[i]
+  
+  print(paste("Running power simulation for effect size:", x))
+  
+  fixef(logit_ctrl)['groupcontrol'] = x #change the fixed effect's size of group
+  
+  #run power simulation
+  x_power_sim = powerSim(logit_ctrl, fixed("groupcontrol", "t"), nsim = 100)
+  
+  # Extract and store power percentage
+  power_percentage <- summary(x_power_sim)$mean
+  
+  power_results$Power[i] = power_percentage
+  
+}
+```
+
+
+```{r}
+
+```
+
+
+```
+
+

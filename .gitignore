@@ -130,7 +130,6 @@ dmypy.json
 
 #csv's
 *.csv
-*.txt
 
 #zip files
 *.zip

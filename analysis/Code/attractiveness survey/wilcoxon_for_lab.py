@@ -32,7 +32,7 @@ questions= {1: 'compréhensibilité',
 
 
 #import data
-all_answers = pd.read_csv("C:/Users/anaho/Desktop/research/Language/APS/analysis/Data/Raw data/Attractiveness data survey.csv", index_col = None).drop(columns='question')
+all_answers = pd.read_csv("C:/Users/anaho/Desktop/research/Language/APS/analysis/Data/Raw data/Attractiveness_lab.csv", index_col = None).drop(columns='question')
 
 
 #divide into a and b responses for all questions

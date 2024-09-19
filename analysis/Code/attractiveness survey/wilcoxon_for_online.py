@@ -66,7 +66,7 @@ keys
 
 
 #import data
-raw_data = pd.read_csv("C:/Users/anaho/Desktop/Data_online_eng_aps/attractiveness_data_raw.csv", index_col = None, usecols = ['Participant Public ID','Object Name','Key','Response'])
+raw_data = pd.read_csv("C:/Users/anaho/Desktop/Data_online_eng_aps//Attractiveness_online.csv", index_col = None, usecols = ['Participant Public ID','Object Name','Key','Response'])
 
 #remove the duplicated participant
 # Filter this participant whose data is there twice

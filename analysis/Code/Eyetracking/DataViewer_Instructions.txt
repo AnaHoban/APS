@@ -15,15 +15,14 @@
 	Create a new period -- call it Sentence_ReadingTime 
 	Set the IP Start Event Setting to EDF message, with the Message text: SENTENCE_DISPLAY
 	Set the IP End Event Setting to EDF message, with the Message text: KEYBOARD_SENTENCE
-
-click on OK (keep 'Apply Strict Event Matching' selected) and OK again (now, you should see 'Sentence_ReadingTime' selected from the dropdown menu where you selected 'Full trial period' earlier.
+	Click on OK (keep 'Apply Strict Event Matching' selected) and OK again (now, you should see 'Sentence_ReadingTime' selected from the dropdown menu where you selected 'Full trial 	period' earlier.
 
 note: make sure the message names are exactly this and that there are no extra spaces at the end of words. do not put quotation marks.
 
-4 -  Create a trial group by right clicking the any interest area of any trial:
- - select 'trial grouping', 
- - then "sentence_type" and "syntactic_condition" as the variable to group trial conditions by.
-  - click on 'regroup'  
+4 - Create a trial group by right clicking the any interest area of any trial:
+	select 'trial grouping', 
+ 	select "sentence_type" and "syntactic_condition" as the variable to group trial conditions by.
+ 	click on 'regroup'  
 
 Notice that there are two new branches in the filetree on the left; they correspond to the different sentence types!
 
@@ -48,22 +47,23 @@ Notice that there are two new branches in the filetree on the left; they corresp
 
     tip: they are in alphabetical order on DataViewer ;)
 
-The other variables I selected were (in blue):
-syntactic_condition
-plausibility_condition
-sentence_type
-condition
-SENTENCE_RT
-PARAPHRASE_ANSWER
-PARAPHRASE_ACCURACY
-Trial_Index_
-section
-item_number
-speech_condition (only for aps data)
+    The other variables I selected were (in blue):
+	1. syntactic_condition
+	2. plausibility_condition
+	3. sentence_type
+	4. condition
+	5. SENTENCE_RT
+	6. PARAPHRASE_ANSWER
+	7. PARAPHRASE_ACCURACY
+	8. Trial_Index_
+	9. section
+	10. item_number
+	11. speech_condition (only for aps data)
 
     Then tick the box 'Create Output Report for All Custom Interest Periods
     Also tick Report IP Data in Multiple Files
 
+Tip: you can save the viewing session such that you don't lose all these parameters you just fixed! :)
 	
 
 

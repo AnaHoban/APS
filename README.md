@@ -50,11 +50,16 @@ Note that attractivness surveys were only administered to the french lab and eng
   2.  Run `python wilcoxon_for_{lab or online}.py`. 
 
 ## 6. Eyetracking 
-The eyetracking data file must be in ____
+The eyetracking data file must be in ____. This data was extracted following these steps in DataViewer:
 
-1. Then you can use the R notebook: `__` to reproduce Table _ of the paper.
+add steps
+
+One 
+
+1. Then you can use the R notebook: `C:/Users/anaho/Desktop/research/Language/APS/analysis/Code/Eyetracking/DescriptiveStats_ET.R` to reproduce Table _ of the paper. This code also plots the results from the table and stores them in the same directory (Analysis/Eyetracking/.) as the proportions table and the R file. 
 2. Add here the file for LMMs
   
+
 
   
 

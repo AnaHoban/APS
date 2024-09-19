@@ -12,6 +12,9 @@ library(rlang)
 library(gridExtra)
 
 
+ggsave <- function(..., bg = 'white') ggplot2::ggsave(..., bg = bg)
+
+
 #set path to directory where the report is
 path_to_report = "C:/Users/anaho/Desktop/Figuring_out_dataviewer/Output/report.txt"
 
@@ -138,6 +141,13 @@ plot = ggplot(data_for_plot, aes_string(x = "factor(condition)", y = col, fill =
     labs(x = "condition",y = col,fill = 'speaker', title = col) +
     theme_minimal()
 print(plot)
+
+#save the plot
+# save the plot
+ggsave(plot, 
+       filename = glue("C:/Users/anaho/Desktop/research/Language/APS/analysis/Code/Eyetracking/{col}.png"),
+       device = "png",
+       height = 6, width = 5, units = "in")
 }
 
 #regressions and skipping variables
@@ -149,6 +159,8 @@ proportion_data <- data_for_plot %>%
   summarise(across(all_of(prop_cols), ~ mean(.x, na.rm = TRUE), .names = "{col}")) %>%
   ungroup()
 
+
+
 for(col in unique(prop_cols)) {
   # Create the plot
   plot <- ggplot(proportion_data, aes_string(x = "factor(condition)", y = col, fill = "speech_condition")) +
@@ -159,11 +171,17 @@ for(col in unique(prop_cols)) {
   
   # Print the plot
   print(plot)
+  
+  # save the plot
+  ggsave(plot, 
+        filename = glue("C:/Users/anaho/Desktop/research/Language/APS/analysis/Code/Eyetracking/{col}.png"),
+        device = "png",
+        height = 6, width = 5, units = "in")
 }
 
 
-
-
+#save the proportion_data table
+write.csv(proportion_data,"C:/Users/anaho/Desktop/research/Language/APS/analysis/Code/Eyetracking/eyetracking_table.csv", row.names = FALSE)
 
 
 

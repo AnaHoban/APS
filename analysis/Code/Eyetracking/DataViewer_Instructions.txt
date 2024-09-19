@@ -1,0 +1,51 @@
+# This document explains how to create the eyetracking dataset for each of the conditions for the eytracking version of the APS experiment
+
+# Written by Ana Hoban on July 22nd
+
+
+---- INSTRUCTIONS ----
+
+- PREPARATION -
+
+1 - Open DataViewer 
+
+2 - Click File > Import Data > Multiple EyeLink Datafiles and select the *folder* containing the wanted data
+
+3 - Go in the 'Full trial period'  dropdown and select 'edit':
+	Create a new period -- call it Sentence_ReadingTime 
+	Set the IP Start Event Setting to EDF message, with the Message text: SENTENCE_DISPLAY
+	Set the IP End Event Setting to EDF message, with the Message text: KEYBOARD_SENTENCE
+
+note: make sure the message names are exactly this and that there are no extra spaces at the end of words. do not put quotation marks.
+
+4 -  Create a trial group by right clicking the any interest area of any trial, then select "sentence_type" and "syntactic_condition" as the variable to group trial conditions by.
+
+5 - (if needed) Resize the IAs: Right click on the folder containing all trials in the tree view and select 'IA Shape Actions' > 'Resize Edges' and then resize top and bottom by 300 px
+
+- REPORT -
+
+6 - Click Analysis > Reports > Interest Area Report
+	
+    Select the following variables (plus any others from the original dataframe)
+
+	1. IA_FIRST_FIXATION_DURATION
+	2. IA_FIRST_RUN_DWELL_TIME
+	3. IA_REGRESSION_PATH_DURATION
+	4. IA_DWELL_TIME
+	5. IA_REGRESSIONS_IN
+	6. IA_REGRESSIONS_OUT
+	7. IA_SKIP
+	8. IA_ID
+
+    tip: they are in alphabetical order on DataViewer ;)
+
+    Then tick the box 'Create Output Report for All Custom Interest Periods
+    Also tick Report IP Data in Multiple Files
+
+	
+
+
+
+
+
+

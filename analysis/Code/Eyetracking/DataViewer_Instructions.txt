@@ -63,8 +63,8 @@ perfectly and had a vertical shift in the reading of their gaze.
 	10. item_number
 	11. speech_condition (only for aps data)
 
-    Then tick the box 'Create Output Report for All Custom Interest Periods
-    Also tick Report IP Data in Multiple Files
+    Then tick the box 'Create Output Report for All Custom Interest Periods'
+    Also tick 'Report IP Data in Multiple Files'
 
 Tip: you can save the viewing session such that you don't lose all these parameters you just fixed! :)
 	

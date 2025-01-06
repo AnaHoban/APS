@@ -16,14 +16,16 @@ Now we can start playing with the data!
 
 ## 2. Transform the raw data into exploitable data (all in the Data/Processed Data/. folder):
      
-For the online experiments, you must use
-   - `Data/ParticipantLogCreation_online.ipynb` to create a participant log file (and remove participants that do not match criteria)
-   - `Data/OnlineData_DataSetBuilding.ipynb` to create a .csv file that matches the format of the eyetracking (in-lab) data
-  outputs: `{english}_online_{aps}Data.csv` in the {English}Lab subdirectory (Note: english <-> french and aps <-> silent)
-        
-  For the eyetracking experiment, you must use
-    - run ` python {...}\APS\analysis\Data\DatasetBuilding.py` (where {} depends on where you put this repo) to navigate to the right directory
-  outputs:  `lab_apsData.csv` and `lab_silentData.csv` in the subdirectory `FrenchLab/`
+For the online experiments, you must use:
+   - `Data/ParticipantLogCreation_online.ipynb` to create a participant log file (and remove participants that do not match criteria);
+   - `Data/OnlineData_DataSetBuilding.ipynb` to create a .csv file that matches the format of the eyetracking (in-lab) data.
+
+OUTPUTS: `{english}_online_{aps}Data.csv` in the {English}Lab subdirectory (Note: english <-> french and aps <-> silent)
+
+For the eyetracking experiment, you must use:
+  - `run python {...}\APS\analysis\Data\DatasetBuilding.py` (where {} depends on where you put this repo) to navigate to the right directory.
+
+OUTPUTS:  `lab_apsData.csv` and `lab_silentData.csv` in the subdirectory `FrenchLab/`
 
 ## 3. Clean the data
 In your terminal: 
@@ -50,13 +52,10 @@ Note that attractivness surveys were only administered to the french lab and eng
   2.  Run `python wilcoxon_for_{lab or online}.py`. 
 
 ## 6. Eyetracking 
-The eyetracking data file must be in ____. This data was extracted following these steps in DataViewer:
-
-add steps
-
-One 
+The eyetracking data file can be found in `APS/analysis/Code/Eyetracking`. This data was extracted following the steps outlined in `APS/analysis/Code/Eyetracking/DataViewer_Instructions.txt` in DataViewer. 
 
 1. Then you can use the R notebook: `C:/Users/anaho/Desktop/research/Language/APS/analysis/Code/Eyetracking/DescriptiveStats_ET.R` to reproduce Table _ of the paper. This code also plots the results from the table and stores them in the same directory (Analysis/Eyetracking/.) as the proportions table and the R file. 
+
 2. Add here the file for LMMs
   
 

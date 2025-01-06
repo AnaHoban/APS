@@ -17,19 +17,12 @@ ggsave <- function(..., bg = 'white') ggplot2::ggsave(..., bg = bg)
 
 
 #set path to directory where the report is
-path_to_report1 = "C:/Users/anaho/Desktop/APS1_dataviewer/Output/report1_aps_Sentence_ReadingTime.txt"
-path_to_report2 = "C:/Users/anaho/Desktop/APS2_dataviewer/Output/report2_aps_Sentence_ReadingTime.txt"
+path_to_report = "C:/Users/anaho/Desktop/CONTROL_dataviewer/Output/report_control_Sentence_ReadingTime.txt"
 
 #import the data
-data1 = read.delim(path_to_report1)
-data2 = read.delim(path_to_report2)
-
+data = read.delim(path_to_report)
 
 # filtering the eyetracking data
-#merging the two datasets
-
-data = merge(data1,data2, all=TRUE)
-
 #keeping only correct trials
 data <- data[data$PARAPHRASE_ACCURACY == 1, ]
 
@@ -90,7 +83,7 @@ data_trimmed <- trim_outliers(data, condition_column, reading_time_column)
 # Check the resulting data
 head(data_trimmed)
 
-data= data_trimmed
+data <- data_trimmed
 
 #####
 
@@ -128,7 +121,7 @@ data = data[data$Region %in% c("FN", "RCV", "SN", "MC"), ]
 
 # the table (note that for RI and RO, the data is not continuous, so we compute)
 df_summary <- data %>%
-  group_by(Region, speech_condition, syntactic_condition, plausibility_condition) %>%
+  group_by(Region, syntactic_condition, plausibility_condition) %>%
   summarise(
     ffd = paste0(round(mean(get(measure_columns$ffd), na.rm = TRUE), 2), " (", round(sd(get(measure_columns$ffd), na.rm = TRUE), 2), ")"),
     gd = paste0(round(mean(get(measure_columns$gd), na.rm = TRUE), 2), " (", round(sd(get(measure_columns$gd), na.rm = TRUE), 2), ")"),
@@ -140,7 +133,7 @@ df_summary <- data %>%
   )%>%
   ungroup()%>%
   mutate(
-  Combined = paste(Region, speech_condition, syntactic_condition, plausibility_condition, sep = " | ")
+    Combined = paste(Region, syntactic_condition, plausibility_condition, sep = " | ")
   ) %>%
   select(Combined, ffd, gd, gp, tt, ri_proportion, ro_proportion, sk_proportion)
 
@@ -155,13 +148,6 @@ formattable(df_summary, list(
   sk_proportion = color_tile("white", "orange")
 ))
 
-# Create a flextable
-#use this for color gradient: https://www.ardata.fr/en/flextable-gallery/2021-03-29-gradient-colored-table/
-colourer <- col_numeric(
-  palette = c("transparent", "red"),
-  domain = c(0, 50))
-
-ft <- flextable(df_summary)
 
 
 ##################################################3
@@ -179,21 +165,21 @@ data_for_plot <- data%>%
 
 
 for(col in unique(head(numeric_columns,4))) {
-
-# Create the plot
-plot = ggplot(data_for_plot, aes_string(x = "factor(condition)", y = col, fill = "speech_condition")) +
+  
+  # Create the plot
+  plot = ggplot(data_for_plot, aes_string(x = "factor(condition)", y = col)) +
     geom_boxplot() +
     facet_wrap(~Region) + 
-    labs(x = "condition",y = col,fill = 'speaker', title = col) +
+    labs(x = "condition",y = col, title = col) +
     theme_minimal()
-print(plot)
-
-#save the plot
-# save the plot
-ggsave(plot, 
-       filename = glue("C:/Users/anaho/Desktop/research/Language/APS/analysis/Code/Eyetracking/{col}.png"),
-       device = "png",
-       height = 6, width = 5, units = "in")
+  print(plot)
+  
+  #save the plot
+  # save the plot
+  ggsave(plot, 
+         filename = glue("C:/Users/anaho/Desktop/research/Language/APS/analysis/Code/Eyetracking/control_{col}.png"),
+         device = "png",
+         height = 6, width = 5, units = "in")
 }
 
 #regressions and skipping variables
@@ -220,20 +206,14 @@ for(col in unique(prop_cols)) {
   
   # save the plot
   ggsave(plot, 
-        filename = glue("C:/Users/anaho/Desktop/research/Language/APS/analysis/Code/Eyetracking/{col}.png"),
-        device = "png",
-        height = 6, width = 5, units = "in")
+         filename = glue("C:/Users/anaho/Desktop/research/Language/APS/analysis/Code/Eyetracking/control_{col}.png"),
+         device = "png",
+         height = 6, width = 5, units = "in")
 }
 
 
 #save the proportion_data table
-write.csv(proportion_data,"C:/Users/anaho/Desktop/research/Language/APS/analysis/Code/Eyetracking/eyetracking_table.csv", row.names = FALSE)
-
-
-
-
-
-
+write.csv(proportion_data,"C:/Users/anaho/Desktop/research/Language/APS/analysis/Code/Eyetracking/control_eyetracking_table.csv", row.names = FALSE)
 
 
 

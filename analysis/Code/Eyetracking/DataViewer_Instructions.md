@@ -33,7 +33,7 @@ Notice that there are two new branches in the filetree on the left; they corresp
 
 - REPORT -
 
-6 - Click Analysis > Reports > Interest Area Report
+7 - Click Analysis > Reports > Interest Area Report
 	
     Select the following variables (plus any others from the original dataframe)
 
